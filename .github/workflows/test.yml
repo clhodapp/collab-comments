@@ -26,3 +26,17 @@ jobs:
         with:
           version: ${{ matrix.emacs_version }}
       - run: make
+
+  # MELPA's checks (package-lint, checkdoc) and a package-build of the
+  # checkout the way MELPA builds it, on one current Emacs.  The full
+  # history is needed so the stable channel can see release tags.
+  melpa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: purcell/setup-emacs@master
+        with:
+          version: "30.1"
+      - run: make lint melpa

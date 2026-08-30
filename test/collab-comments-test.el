@@ -22,10 +22,8 @@
 ;;
 ;; ERT suite for the model (threads, replies, dismissal, hiding,
 ;; navigation), anchors under text replacement, the thread view, and
-;; persistence.  Run with `make test', or directly:
-;;
-;;   emacs -Q --batch -L . -l test/collab-comments-test.el \
-;;         -f ert-run-tests-batch-and-exit
+;; persistence.  Run with `make test' (the Makefile has the direct
+;; batch command).
 ;;
 ;;; Code:
 
@@ -582,8 +580,9 @@ collapses at the replacement's start when it is gone."
         (should-not (collab-comments-threads))))))
 
 (ert-deftest collab-comments-test-persist-autosave-version-round-trip ()
-  "Comments on unsaved text restore exactly against recovered content
-and degrade to an orphan against the saved file."
+  "Unsaved-text comments restore against recovered content, not the file.
+Against the recovered auto-save content they restore exactly; against
+the saved file they degrade to an orphan."
   (collab-comments-test--with-store
     (collab-comments-test--with-file-buffer "alpha\n"
      (let (modified-content)

@@ -313,6 +313,18 @@ nothing here reads the minibuffer:
 runs both on Emacs 26.1, 26.3, 27.2, 28.2, 29.4, 30.1, 31.1, and the
 current development snapshot.
 
+The package is kept in the shape MELPA asks of a submission, so that
+listing it is a recipe away. `make lint` runs `package-lint` on the
+package file and `checkdoc` on every file, failing on any finding.
+`make melpa` builds the package with `package-build` the way MELPA
+does, from a recipe generated to point at the checkout, on the snapshot
+channel and the stable channel; the tarballs land in
+`.tools/melpa/packages/`. Both targets install their tool from MELPA
+into `.tools/` on first use, and CI runs them on Emacs 30.1 alongside
+the matrix. Releases are tagged `vX.Y.Z`, matching the `Version`
+header in `collab-comments.el`; MELPA Stable builds from the newest
+such tag.
+
 ## License
 
 GPL-3.0-or-later. See `LICENSE`.
