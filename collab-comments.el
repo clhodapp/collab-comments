@@ -93,9 +93,12 @@ commented text.")
   "Face for comment timestamps in thread renderings.")
 
 (defface collab-comments-divider
-  '((t :inherit shadow :strike-through t))
+  '((((background dark)) :strike-through "grey70")
+    (t :strike-through "grey50"))
   "Face for the rule separating thread sections in the thread view.
-Drawn as a strike-through stretch glyph spanning the window.")
+Drawn as a strike-through stretch glyph spanning the window; the line
+takes the colors of the `shadow' face without inheriting it, so a
+theme can restyle it outright.")
 
 (defvar collab-comments--next-id 1
   "Session-unique id handed to the next new thread.")
