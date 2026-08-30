@@ -80,15 +80,24 @@
           (message "%s" (string-trim (buffer-string))))))
     (kill-emacs (if failed 1 0))))
 
+(defun collab-comments-checks--git (&rest args)
+  "Run git with ARGS in the repository root; non-nil when it succeeds."
+  (let ((default-directory collab-comments-checks--root))
+    (zerop (apply #'call-process "git" nil nil nil args))))
+
 (defun collab-comments-checks-build ()
   "Build the package with package-build, as MELPA would, from this checkout.
 Builds the snapshot channel, then the stable channel (which needs a
-release tag), into .tools/melpa/packages/."
+release tag), into .tools/melpa/packages/.  The recipe names a
+temporary local branch, melpa-build, placed at HEAD for the duration:
+package-build clones the checkout and reads the branch it is told to,
+and a detached HEAD (a CI checkout of a pull request) is on no branch."
   (collab-comments-checks--ensure 'package-build)
   (let* ((scratch (expand-file-name ".tools/melpa" collab-comments-checks--root))
          (package-build-recipes-dir (expand-file-name "recipes" scratch))
          (package-build-archive-dir (expand-file-name "packages" scratch))
-         (package-build-working-dir (expand-file-name "working" scratch)))
+         (package-build-working-dir (expand-file-name "working" scratch))
+         (branch "melpa-build"))
     (when (file-directory-p scratch)
       (delete-directory scratch t))
     (dolist (dir (list package-build-recipes-dir
@@ -96,11 +105,24 @@ release tag), into .tools/melpa/packages/."
                        package-build-working-dir))
       (make-directory dir t))
     (with-temp-file (expand-file-name "collab-comments" package-build-recipes-dir)
-      (prin1 `(collab-comments :fetcher git :url ,collab-comments-checks--root)
+      (prin1 `(collab-comments :fetcher git
+                               :url ,collab-comments-checks--root
+                               :branch ,branch)
              (current-buffer)))
-    (package-build-archive "collab-comments")
-    (setq package-build-stable t)
-    (package-build-archive "collab-comments")
+    (unless (collab-comments-checks--git "branch" "-f" branch "HEAD")
+      (error "Could not place the %s branch at HEAD" branch))
+    (unwind-protect
+        (progn
+          (package-build-archive "collab-comments")
+          ;; A fresh clone for the stable channel too: updating the
+          ;; existing clone has package-build ask git which branch the
+          ;; source's HEAD is on, which a detached HEAD cannot answer.
+          (delete-directory (expand-file-name "collab-comments"
+                                              package-build-working-dir)
+                            t)
+          (setq package-build-stable t)
+          (package-build-archive "collab-comments"))
+      (collab-comments-checks--git "branch" "-D" branch))
     (message "Built: %s"
              (directory-files package-build-archive-dir nil "\\.tar\\'"))))
 
